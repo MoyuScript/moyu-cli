@@ -1,0 +1,20 @@
+{
+  "name": "moyu-cli",
+  "version": "1.0.0",
+  "main": "./src/index.js",
+  "author": "MoyuScript <i@moyu.moe>",
+  "license": "MIT",
+  "private": true,
+  "bin": {
+    "moyu": "./src/index.js"
+  },
+  "dependencies": {
+    "axios": "^0.24.0",
+    "bvid": "^1.1.2",
+    "chalk": "^4.1.2",
+    "commander": "^8.3.0",
+    "gauge": "^3.0.1",
+    "pretty-bytes": "^5.6.0",
+    "sanitize-filename": "^1.6.3"
+  }
+}
