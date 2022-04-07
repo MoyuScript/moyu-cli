@@ -192,7 +192,7 @@ async function downloadFile(url, path, onProgress) {
  * @param {number[]} pages 
  * @param {string} output
  */
-async function downloadVideo(id, pages, meta, output) {
+async function downloadVideo(id, pages, meta, output, height = 2160) {
   for (const page of pages) {
     const filename = `${meta.bvid} p${page.page} ${sanitize(page.part)}-${sanitize(meta.title)}`
     const outputPath = path.resolve(output, filename + '.mp4')
@@ -200,8 +200,16 @@ async function downloadVideo(id, pages, meta, output) {
     
     const downloadUrl = await fetchDownloadUrl(meta.bvid, page.cid)
     
-    videoUrl = downloadUrl.dash.video[0].baseUrl
-    audioUrl = downloadUrl.dash.audio[0].baseUrl
+    const video = downloadUrl.dash.video.find((v) => v.height <= height);
+    if (!video) {
+      throw new Error(`没有高度低于 ${height} 的视频。`)
+    }
+    videoUrl = video.baseUrl
+
+    const audio = downloadUrl.dash.audio[0]
+    audioUrl = audio.baseUrl
+
+    console.log(`视频分辨率：${video.width}*${video.height}`)
     const videoTempFilename = filename + '_video_temp.m4s'
     const audioTempFilename = filename + '_audio_temp.m4s'
 
@@ -258,7 +266,8 @@ cmd.description('哔哩哔哩视频下载')
   .option('-p --page <page>', '指定要下载的分 P 索引号，设置为"all"将下载所有分 P', 1)
   .option('-b --batch <path>', '从文本文件指定的视频号批量下载，一行一个，将会下载所有分 P')
   .option('-o --output <outputPath>', '输出文件夹路径')
-  .action(async ({id, page, batch, output = process.cwd()}) => {
+  .option('--height <height>', '最大视频高度（2160, 1080, 720, 480 等）', (value) => parseInt(value, 10), 2160)
+  .action(async ({id, page, batch, output = process.cwd(), height}) => {
     output = path.normalize(output)
     if (batch) {
       // 批量下载视频
@@ -271,7 +280,7 @@ cmd.description('哔哩哔哩视频下载')
         const meta = await fetchMeta(id)
         const pages = meta.pages;
 
-        await downloadVideo(id, pages, meta, output)
+        await downloadVideo(id, pages, meta, output, height)
       }
     } else {
       // 下载单个视频
@@ -305,7 +314,7 @@ cmd.description('哔哩哔哩视频下载')
         pagesCidToDownload.push(pages[page - 1])
       }
       
-      await downloadVideo(meta.bvid, pagesCidToDownload, meta, output)
+      await downloadVideo(meta.bvid, pagesCidToDownload, meta, output, height)
     }
   })
 
